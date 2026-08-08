@@ -1,0 +1,12 @@
+# containerlab runtime directory
+clab-05/
+
+# packet captures
+*.pcap
+
+# logs (念のため)
+logs/
+
+# params / runtime artifacts（必要なら）
+# params/
+

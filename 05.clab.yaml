@@ -1,0 +1,50 @@
+name: 05
+topology:
+    nodes:
+        user01:
+            kind: linux
+            image: alpine:latest
+            exec:
+              - ip addr add 1.0.0.1/31 dev eth1
+              - ip route add 2.0.0.0/31 via 1.0.0.0
+        user02:
+            kind: linux
+            image: alpine:latest
+            exec:
+              - ip addr add 2.0.0.1/31 dev eth1
+              - ip route add 1.0.0.0/31 via 2.0.0.0
+        as64520:
+            kind: arista_ceos
+            image: ceos:4.36.1F
+            binds:
+        as64530:
+            kind: linux
+            image: quay.io/frrouting/frr:master
+            binds:
+              - ./params/daemons:/etc/frr/daemons
+              - ./params/vtysh.conf:/etc/frr/vtysh.conf
+              - ./confs/as64530.conf:/etc/frr/frr.conf
+              - ./logs/as64530.log:/var/log/frr.log
+        gobgp01:
+            kind: linux
+            image: alpine:latest
+            binds:
+              - ./confs/gobgp01.conf:/opt/gobgp01.conf
+            exec:
+              - wget https://github.com/osrg/gobgp/releases/download/v4.8.0/gobgp_4.8.0_linux_amd64.tar.gz -O /opt/gobgp.tar.gz
+              - tar -xzf /opt/gobgp.tar.gz -C /opt
+              - chmod +x /opt/gobgp /opt/gobgpd
+              - ln -s /opt/gobgp /usr/local/bin/gobgp
+              - ln -s /opt/gobgpd /usr/local/bin/gobgpd
+              - ip addr add 2.0.0.3/31 dev eth1
+              - ip route add 1.0.0.0/31 via 2.0.0.2
+              - ip route add 2.0.0.0/31 via 2.0.0.2
+              - ip route add 3.0.0.0/31 via 2.0.0.2
+              - ip route add 1.1.1.1/32 via 2.0.0.2
+              - ip addr add 3.3.3.3/32 dev lo
+              # - gobgpd -f /opt/gobgp01.conf &
+    links:
+      - endpoints: ["user01:eth1", "as64520:eth1"]
+      - endpoints: ["user02:eth1", "as64530:eth1"]
+      - endpoints: ["as64520:eth2", "as64530:eth2"]
+      - endpoints: ["gobgp01:eth1", "as64530:eth3"]
