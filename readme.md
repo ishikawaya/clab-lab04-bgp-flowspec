@@ -41,6 +41,23 @@ The lab consists of five nodes forming two eBGP adjacencies and one multihop Flo
 
 ---
 
+## gobgp commands
+```
+gobgpd -f /opt/gobgp01.conf &
+gobgp neighbor
+# Ensure that the session with AS64520 is in Established state
+
+# Block ICMP traffic between user01 and user02
+gobgp global rib -a ipv4-flowspec add match destination 1.0.0.1/32 source 2.0.0.1/32 protocol icmp then discard
+gobgp global rib -a ipv4-flowspec add match destination 2.0.0.1/32 source 1.0.0.1/32 protocol icmp then discard
+
+
+# Re-enable ICMP traffic between user01 and user02
+gobgp global rib -a ipv4-flowspec del match destination 1.0.0.1/32 source 2.0.0.1/32 protocol icmp then discard
+gobgp global rib -a ipv4-flowspec del match destination 2.0.0.1/32 source 1.0.0.1/32 protocol icmp then discard
+
+```
+
 ## Notes
 - Flowspec rules can be injected from gobgp01 and verified on as64520 (cEOS).
 - user01 and user02 can be used to generate ICMP traffic to observe filtering behavior.
